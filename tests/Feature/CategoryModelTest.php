@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use Database\Seeders\CategorySeeder;
+use Database\Seeders\ProductSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,7 @@ use Tests\TestCase;
 use function PHPUnit\Framework\assertCount;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertNotNull;
+use function PHPUnit\Framework\assertNull;
 use function PHPUnit\Framework\assertTrue;
 
 class CategoryModelTest extends TestCase
@@ -149,5 +151,33 @@ class CategoryModelTest extends TestCase
         assertTrue($result);
         assertEquals('Food Updated', Category::find('FOOD')->name);
         assertEquals('description food updated', Category::find('FOOD')->description);
+    }
+
+    public function test_global_scope() {
+        $this->seed(CategorySeeder::class);
+
+        $result = Category::find('FOOD');
+        assertNotNull($result);
+        assertEquals(1, $result->count());
+        
+        Category::insert([
+            'id' => 'GADGET',
+            'name' => 'Gadget',
+            'description' => 'gadget description',
+            'is_active' => false
+        ]);
+
+        $result2 = Category::find('GADGET');
+        assertNull($result2);
+    }
+
+    public function test_relationship_one_to_many() {
+        $this->seed(CategorySeeder::class);
+        $this->seed(ProductSeeder::class);
+
+        $category = Category::find('FOOD');
+        assertNotNull($category);
+        assertCount(1, $category->products);
+        assertEquals('Ayam goreng', $category->products[0]->name);
     }
 }
